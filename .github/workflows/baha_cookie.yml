@@ -1,4 +1,4 @@
-name: Login BAHA
+name: Get baha cookie
 
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
         pip install selenium
 
     - name: Run Selenium Script
-      run: python baha.py
+      run: python baha_cookie.py
       env:
         SHOPEE_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
         SHOPEE_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
@@ -33,7 +33,7 @@ jobs:
     - name: Commit to the main branch of repo
       run: |
         git config --local user.name "imsho's bot"
-        git config --local user.email "Uknowho@gmail.com"
+        git config --local user.email "imsho_action_bot@gmail.com"
         git add .
         git commit -m "Update cookie"
         git push origin main -f
