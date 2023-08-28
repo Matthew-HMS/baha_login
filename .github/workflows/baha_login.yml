@@ -2,8 +2,6 @@ name: Login BAHA
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 
 jobs:
