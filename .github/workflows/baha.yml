@@ -1,0 +1,36 @@
+name: Login Shopee
+
+on:
+  workflow_dispatch:
+
+
+jobs:
+  run_selenium:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install selenium
+
+    - name: Run Selenium Script
+      run: python baha.py
+      env:
+        SHOPEE_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
+        SHOPEE_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
+
+    - name: Commit to the main branch of repo
+      run: |
+        git config --local user.name "imsho's bot"
+        git add .
+        git commit -m "Update cookie"
+        git push origin main -f

@@ -3,9 +3,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import pickle
 from selenium.common.exceptions import NoSuchElementException
+import os
 
-account = '54matt'
-password = 'Ho0218ho'
+account = os.getenv("BAHA_ACCOUNT")
+password = os.getenv("BAHA_PASSWORD")
 
 options = webdriver.ChromeOptions()
 # options.add_argument('--headless')
@@ -31,10 +32,10 @@ if login:
 else:
     driver.get("https://user.gamer.com.tw/login.php")
     driver.refresh()
-    account = driver.find_element(By.XPATH, "//*[@name = 'userid']")
-    account.send_keys('matthewhms')
+    email = driver.find_element(By.XPATH, "//*[@name = 'userid']")
+    email.send_keys(account)
     pword = driver.find_element(By.XPATH, "//*[@name = 'password']")
-    pword.send_keys('ho0218ho')
+    pword.send_keys(password)
     time.sleep(5)
     submit = driver.find_element(By.XPATH, "//*[@id = 'btn-login']")
     submit.click()
