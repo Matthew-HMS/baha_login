@@ -25,8 +25,8 @@ jobs:
     - name: Run Selenium Script
       run: python baha_cookie.py
       env:
-        SHOPEE_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
-        SHOPEE_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
+        BAHA_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
+        BAHA_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
 
     - name: Commit to the main branch of repo
       run: |
