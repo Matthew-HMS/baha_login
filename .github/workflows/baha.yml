@@ -2,6 +2,8 @@ name: Login BAHA
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 
 jobs:
@@ -31,6 +33,7 @@ jobs:
     - name: Commit to the main branch of repo
       run: |
         git config --local user.name "imsho's bot"
+        git config --local user.email "Uknowho@gmail.com"
         git add .
         git commit -m "Update cookie"
         git push origin main -f
