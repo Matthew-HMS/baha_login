@@ -14,7 +14,7 @@ driver = webdriver.Chrome(options=options)
 driver.get("https://www.gamer.com.tw/")
 
 # Load cookie
-cookies = pickle.load(open("gamer_cookies.pkl", "rb"))
+cookies = pickle.load(open("baha_cookies.pkl", "rb"))
 for cookie in cookies:
     driver.add_cookie(cookie)
 driver.refresh()
@@ -42,7 +42,7 @@ else:
 
     # save cookie
     time.sleep(5)
-    pickle.dump(driver.get_cookies(), open("gamer_cookies.pkl", "wb"))
+    pickle.dump(driver.get_cookies(), open("baha_cookies.pkl", "wb"))
 
 
 # quit
