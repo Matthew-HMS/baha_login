@@ -30,9 +30,12 @@ driver.get("https://www.gamer.com.tw/")
 time.sleep(3)
 daily = driver.find_element(By.XPATH, "//*[@id='signin-btn']")
 daily.click()
+time.sleep(3)
 double = driver.find_element(By.XPATH, "//*[@class='popup-dailybox__btn']")
-double.click()
-time.sleep(5)
+try:
+    double.click()
+except:
+    pass
 
 # quit
 time.sleep(30)
