@@ -23,9 +23,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install selenium
-      env:
-        BAHA_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
-        BAHA_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
+
 
     - name: Run Selenium Script
       run: python baha.py
+      env:
+        BAHA_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
+        BAHA_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
