@@ -5,11 +5,11 @@ import pickle
 from selenium.common.exceptions import NoSuchElementException
 import os
 
-account = os.getenv("BAHA_ACCOUNT")
-password = os.getenv("BAHA_PASSWORD")
+account = 'matthewhms'
+password = 'ho0218ho'
 
 options = webdriver.ChromeOptions()
-options.add_argument('--headless')
+# options.add_argument('--headless')
 driver = webdriver.Chrome(options=options)
 driver.get("https://www.gamer.com.tw/")
 
@@ -34,6 +34,10 @@ time.sleep(3)
 double = driver.find_element(By.XPATH, "//*[@class='popup-dailybox__btn']")
 try:
     double.click()
+    time.sleep(3)
+    confirm = driver.find_element(By.XPATH, "//Button[@type='submit']")
+    confirm.click()
+
 except:
     pass
 
