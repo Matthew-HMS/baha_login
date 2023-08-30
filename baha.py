@@ -5,11 +5,11 @@ import pickle
 from selenium.common.exceptions import NoSuchElementException
 import os
 
-account = 'matthewhms'
-password = 'ho0218ho'
+account = os.getenv("BAHA_ACCOUNT")
+password = os.getenv("BAHA_PASSWORD")
 
 options = webdriver.ChromeOptions()
-# options.add_argument('--headless')
+options.add_argument('--headless')
 driver = webdriver.Chrome(options=options)
 driver.get("https://www.gamer.com.tw/")
 
