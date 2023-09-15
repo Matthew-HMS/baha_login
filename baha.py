@@ -10,6 +10,7 @@ password = os.getenv("BAHA_PASSWORD")
 
 options = webdriver.ChromeOptions()
 options.add_argument('--headless=new')
+options.add_argument('--window-size=1920,1080')
 driver = webdriver.Chrome(options=options)
 driver.get("https://www.gamer.com.tw/")
 
