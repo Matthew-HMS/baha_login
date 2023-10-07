@@ -43,5 +43,5 @@ except:
     pass
 
 # quit
-time.sleep(3)
+time.sleep(30)
 driver.quit()
