@@ -32,3 +32,6 @@ jobs:
       env:
         BAHA_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
         BAHA_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
+
+    - name: Dummy commit to keep alive workflow
+      uses: gautamkrishnar/keepalive-workflow@v1
