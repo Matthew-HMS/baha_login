@@ -28,4 +28,4 @@ Click [here](https://github.com/Matthew-HMS/baha_login/fork) to create a fork of
 1. Go to the "Action" page and run the workflow manually to test if it run successfully.
 <img src = "https://github.com/Matthew-HMS/baha_login/blob/main/readme_img/action.png">
 <br>
-You now will automatically login baha everyday at 00:20(UTC+8) by default. You may change to any time you like to avoid the traffic. It's that easy to earn a badge ! And if you login successfully, don't forget to star this repo ~ 😎
+You now will automatically login baha everyday at 00:20(UTC+8) by default. You may change to any time you like to avoid the traffic. It's that easy to earn a badge ! And if you login successfully, don't forget to star this repo ~ 😎 <img src = "https://github.com/Matthew-HMS/baha_login/blob/main/readme_img/badge.png">
