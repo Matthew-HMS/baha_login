@@ -5,7 +5,7 @@ Click [here](https://github.com/Matthew-HMS/baha_login/fork) to create a fork of
 <br>
 
 ### Set up your account and password
-1. Go to your "Setting" page in the repository you just forked. Then, find the "Secrets and Variables" on the left side. Clisk "Actions"
+1. Go to your "Setting" page in the repository you just forked. Then, find the "Secrets and Variables" on the left side. Click "Actions"
 <br>
 <img src = "https://github.com/Matthew-HMS/baha_login/blob/main/readme_img/secrets.png">
 <br>

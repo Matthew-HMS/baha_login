@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
 
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -33,5 +33,3 @@ jobs:
         BAHA_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
         BAHA_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
 
-    - name: Dummy commit to keep alive workflow
-      uses: gautamkrishnar/keepalive-workflow@v1
