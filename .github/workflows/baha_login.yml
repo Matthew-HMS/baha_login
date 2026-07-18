@@ -14,10 +14,10 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: 3.8
 
@@ -32,6 +32,14 @@ jobs:
       env:
         BAHA_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
         BAHA_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
+
+    - name: Upload Failure Screenshot
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: error-screenshot
+        path: error.png
+        if-no-files-found: ignore
 
     - name: Create Dummy Commit
       run: |
