@@ -47,6 +47,9 @@ def login(driver: webdriver.Chrome, wait: WebDriverWait, account: str, password:
     """Fill in and submit the login form."""
     log.info("Opening login page")
     driver.get(LOGIN_URL)
+    # Reloading the login page drops the reCAPTCHA challenge that appears on
+    # the first (fresh) visit, letting the form submit without verification.
+    driver.refresh()
 
     email = wait.until(EC.presence_of_element_located((By.NAME, "userid")))
     email.send_keys(account)
@@ -81,6 +84,26 @@ def claim_rewards(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
             log.info("Skipped %s (not available)", name)
 
 
+def dump_debug_info(driver: webdriver.Chrome) -> None:
+    """Save a screenshot, page source, URL and title for post-mortem debugging."""
+    try:
+        log.error("Current URL: %s", driver.current_url)
+        log.error("Page title: %s", driver.title)
+    except WebDriverException:
+        pass
+    try:
+        driver.save_screenshot("error.png")
+        log.info("Saved screenshot to error.png")
+    except WebDriverException:
+        pass
+    try:
+        with open("page_source.html", "w", encoding="utf-8") as f:
+            f.write(driver.page_source)
+        log.info("Saved page source to page_source.html")
+    except (WebDriverException, OSError):
+        pass
+
+
 def main() -> int:
     account = os.getenv("BAHA_ACCOUNT")
     password = os.getenv("BAHA_PASSWORD")
@@ -96,11 +119,7 @@ def main() -> int:
         return 0
     except (TimeoutException, WebDriverException):
         log.exception("Automation failed")
-        try:
-            driver.save_screenshot("error.png")
-            log.info("Saved screenshot to error.png")
-        except WebDriverException:
-            pass
+        dump_debug_info(driver)
         return 1
     finally:
         driver.quit()
