@@ -1,22 +1,25 @@
 """Automated daily sign-in for gamer.com.tw (Bahamut).
 
 Logs in with credentials from the BAHA_ACCOUNT / BAHA_PASSWORD environment
-variables, then claims the daily sign-in and double reward if available.
-Designed to run headless in CI (e.g. GitHub Actions).
+variables; the daily reward is claimed automatically on sign-in. Designed to
+run headless in CI (e.g. GitHub Actions).
 """
 
 import logging
 import os
 import sys
 
+import random
+import time
+
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 LOGIN_URL = "https://user.gamer.com.tw/login.php"
-HOME_URL = "https://www.gamer.com.tw/"
 WAIT_TIMEOUT = 20
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -32,15 +35,28 @@ log = logging.getLogger("baha")
 
 
 def build_driver() -> webdriver.Chrome:
-    """Create a headless Chrome driver tuned for CI runners."""
+    """Create a Chrome driver tuned for CI runners.
+
+    Headless by default; set HEADLESS=0 to run a visible browser (useful for
+    local testing, where a real window scores better against reCAPTCHA).
+    """
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
+    if os.getenv("HEADLESS", "1") != "0":
+        options.add_argument("--headless=new")
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-blink-features=AutomationControlled")
     options.add_argument(f"--user-agent={USER_AGENT}")
     return webdriver.Chrome(options=options)
+
+
+def human_type(element, text: str) -> None:
+    """Click a field and type into it with small random delays, like a person."""
+    element.click()
+    for char in text:
+        element.send_keys(char)
+        time.sleep(random.uniform(0.05, 0.18))
 
 
 def login(driver: webdriver.Chrome, wait: WebDriverWait, account: str, password: str) -> None:
@@ -51,57 +67,35 @@ def login(driver: webdriver.Chrome, wait: WebDriverWait, account: str, password:
     # the first (fresh) visit, letting the form submit without verification.
     driver.refresh()
 
+    # reCAPTCHA Enterprise scores *how* we interact, not just the click. Filling
+    # instantly and clicking with no cursor movement scores as a bot and the
+    # submit gets silently dropped. So drive the real pointer: move to each
+    # field, click it, type with small delays, then move to the button and click.
     email = wait.until(EC.presence_of_element_located((By.NAME, "userid")))
-    email.send_keys(account)
-    driver.find_element(By.NAME, "password").send_keys(password)
+    password_field = driver.find_element(By.NAME, "password")
+    human_type(email, account)
+    human_type(password_field, password)
 
+    # The 登入 button is an <a> whose click handler is bound by the deferred
+    # login.js, which runs only after the page loads. Wait until it's bound so
+    # the click can't be a silent no-op.
+    wait.until(lambda d: d.execute_script("return document.readyState") == "complete")
+    wait.until(lambda d: d.execute_script(
+        "return typeof jQuery !== 'undefined'"
+        " && jQuery('#btn-login').length > 0"
+        " && !!(jQuery._data(jQuery('#btn-login')[0], 'events') || {}).click"
+    ))
     log.info("Submitting login form")
-    wait.until(EC.element_to_be_clickable((By.ID, "btn-login"))).click()
+    button = driver.find_element(By.ID, "btn-login")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+    ActionChains(driver).move_to_element(button).pause(0.4).click().perform()
 
-    # Wait until we're redirected away from the login page.
+    # On success login.js sets cookies and redirects away from the login page.
     wait.until(lambda d: "login.php" not in d.current_url)
     log.info("Login successful")
 
-
-def claim_rewards(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
-    """Claim the daily sign-in and double reward if the buttons are present.
-
-    Any of these steps may be absent (already claimed, no reward today), so
-    each click is attempted independently and missing elements are ignored.
-    """
-    driver.get(HOME_URL)
-
-    steps = [
-        ("daily sign-in", (By.ID, "signin-btn")),
-        ("double reward", (By.CLASS_NAME, "popup-dailybox__btn")),
-        ("confirm", (By.XPATH, "//button[@type='submit']")),
-    ]
-    for name, locator in steps:
-        try:
-            wait.until(EC.element_to_be_clickable(locator)).click()
-            log.info("Clicked %s", name)
-        except TimeoutException:
-            log.info("Skipped %s (not available)", name)
-
-
-def dump_debug_info(driver: webdriver.Chrome) -> None:
-    """Save a screenshot, page source, URL and title for post-mortem debugging."""
-    try:
-        log.error("Current URL: %s", driver.current_url)
-        log.error("Page title: %s", driver.title)
-    except WebDriverException:
-        pass
-    try:
-        driver.save_screenshot("error.png")
-        log.info("Saved screenshot to error.png")
-    except WebDriverException:
-        pass
-    try:
-        with open("page_source.html", "w", encoding="utf-8") as f:
-            f.write(driver.page_source)
-        log.info("Saved page source to page_source.html")
-    except (WebDriverException, OSError):
-        pass
+    # Give the daily reward, which claims automatically on sign-in, time to post.
+    time.sleep(10)
 
 
 def main() -> int:
@@ -115,11 +109,9 @@ def main() -> int:
     try:
         wait = WebDriverWait(driver, WAIT_TIMEOUT)
         login(driver, wait, account, password)
-        claim_rewards(driver, wait)
         return 0
     except (TimeoutException, WebDriverException):
         log.exception("Automation failed")
-        dump_debug_info(driver)
         return 1
     finally:
         driver.quit()
