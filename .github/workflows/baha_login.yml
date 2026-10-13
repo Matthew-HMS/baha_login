@@ -33,6 +33,14 @@ jobs:
         BAHA_ACCOUNT: ${{ secrets.BAHA_ACCOUNT }}
         BAHA_PASSWORD: ${{ secrets.BAHA_PASSWORD }}
 
+    - name: Upload Failure Screenshot
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: failure-screenshot
+        path: failure.png
+        if-no-files-found: ignore
+
     - name: Create Dummy Commit
       run: |
         echo "Dummy commit at $(date)" >> dummy_commit.log
