@@ -178,11 +178,19 @@ def login(driver: webdriver.Chrome, wait: WebDriverWait, account: str, password:
 
 def daily_signin(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
     """Claim the daily sign-in reward and fail unless it is recorded."""
-    log.info("Opening homepage for daily sign-in")
-    driver.get(HOME_URL)
-    wait.until(lambda d: d.execute_script(
-        "return typeof Bahamut !== 'undefined' && typeof Bahamut.Csrf === 'function'"
-    ))
+    # Login already lands on the homepage; loading it again tends to trip
+    # Cloudflare's "Verify you are human" challenge, so reuse that page.
+    if driver.current_url != HOME_URL:
+        log.info("Opening homepage for daily sign-in")
+        driver.get(HOME_URL)
+    try:
+        wait.until(lambda d: d.execute_script(
+            "return typeof Bahamut !== 'undefined' && typeof Bahamut.Csrf === 'function'"
+        ))
+    except TimeoutException:
+        if driver.find_elements(By.CSS_SELECTOR, "iframe[src*='challenges.cloudflare.com']"):
+            raise SigninError("Homepage is behind a Cloudflare challenge")
+        raise
     driver.set_script_timeout(WAIT_TIMEOUT)
     result = driver.execute_async_script(SIGNIN_SCRIPT)
     if result.get("error"):
