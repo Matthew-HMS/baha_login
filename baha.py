@@ -25,14 +25,15 @@ LOGIN_TIMEOUT = 30
 # Cookies do_login.php sets on a successful sign-in.
 SESSION_COOKIES = ("BAHAID", "BAHARUNE")
 SCREENSHOT_PATH = "failure.png"
-HOME_URL = "https://www.gamer.com.tw/"
+SIGNIN_API = "https://api.gamer.com.tw/user/v1/signin.php"
 
-# Runs in the page (so it carries the session cookies and Bahamut's CSRF
-# helper): check today's sign-in, sign in if needed, then re-check. Mirrors
-# what signin.js does when you click 每日簽到.
+# Runs on an api.gamer.com.tw page (so it carries the session cookies): check
+# today's sign-in, sign in if needed, then re-check. Mirrors what signin.js
+# does when you click 每日簽到, with Bahamut.Csrf from csrf.js inlined: a
+# random 16-hex token sent both as a cookie and as a header.
 SIGNIN_SCRIPT = """
 const done = arguments[arguments.length - 1];
-const url = "https://api.gamer.com.tw/user/v1/signin.php";
+const url = arguments[0];
 const status = async () =>
   (await fetch(url + "?action=2", {credentials: "include"})).json();
 (async () => {
@@ -40,12 +41,13 @@ const status = async () =>
   if (s.error) return done({error: s.error.message});
   const already = s.data.signin == 1;
   if (!already) {
-    const csrf = new Bahamut.Csrf();
-    csrf.setCookie();
+    const token = Array.from(crypto.getRandomValues(new Uint8Array(8)),
+      b => b.toString(16).padStart(2, "0")).join("");
+    document.cookie = `ckBahamutCsrfToken=${token}; domain=.gamer.com.tw; path=/; secure`;
     const body = new FormData();
     body.append("action", 1);
     const r = await (await fetch(url, {
-      method: "POST", body, headers: csrf.getFetchHeaders(), credentials: "include",
+      method: "POST", body, headers: {"X-Bahamut-Csrf-Token": token}, credentials: "include",
     })).json();
     if (r.error) return done({error: r.error.message});
     s = await status();
@@ -176,23 +178,14 @@ def login(driver: webdriver.Chrome, wait: WebDriverWait, account: str, password:
     verify_logged_in(driver)
 
 
-def daily_signin(driver: webdriver.Chrome, wait: WebDriverWait) -> None:
+def daily_signin(driver: webdriver.Chrome) -> None:
     """Claim the daily sign-in reward and fail unless it is recorded."""
-    # Login already lands on the homepage; loading it again tends to trip
-    # Cloudflare's "Verify you are human" challenge, so reuse that page.
-    if driver.current_url != HOME_URL:
-        log.info("Opening homepage for daily sign-in")
-        driver.get(HOME_URL)
-    try:
-        wait.until(lambda d: d.execute_script(
-            "return typeof Bahamut !== 'undefined' && typeof Bahamut.Csrf === 'function'"
-        ))
-    except TimeoutException:
-        if driver.find_elements(By.CSS_SELECTOR, "iframe[src*='challenges.cloudflare.com']"):
-            raise SigninError("Homepage is behind a Cloudflare challenge")
-        raise
+    # The www homepage now sits behind Cloudflare's "Verify you are human"
+    # challenge on CI runners, but the API host does not, so work from there.
+    log.info("Opening sign-in API")
+    driver.get(SIGNIN_API + "?action=2")
     driver.set_script_timeout(WAIT_TIMEOUT)
-    result = driver.execute_async_script(SIGNIN_SCRIPT)
+    result = driver.execute_async_script(SIGNIN_SCRIPT, SIGNIN_API)
     if result.get("error"):
         raise SigninError(f"Daily sign-in failed: {result['error']}")
     if result.get("signin") != 1:
@@ -224,7 +217,7 @@ def main() -> int:
     try:
         wait = WebDriverWait(driver, WAIT_TIMEOUT)
         login(driver, wait, account, password)
-        daily_signin(driver, wait)
+        daily_signin(driver)
         return 0
     except (LoginError, SigninError) as e:
         log.error("%s (url: %s)", e, driver.current_url)
